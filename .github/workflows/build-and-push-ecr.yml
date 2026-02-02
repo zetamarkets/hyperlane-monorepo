@@ -22,7 +22,7 @@ env:
   AWS_REGION: ap-northeast-1
   ECR_REGISTRY: 840153641671.dkr.ecr.ap-northeast-1.amazonaws.com
   ECR_REPOSITORY: hyperlane
-  AWS_ECR_ROLE_ARN: arn:aws:iam::840153641671:role/monorepo-gha
+  AWS_ECR_ROLE_ARN: arn:aws:iam::840153641671:role/hyperlane-gha
 
 jobs:
   meta:
