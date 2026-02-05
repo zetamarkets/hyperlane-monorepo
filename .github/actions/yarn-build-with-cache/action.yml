@@ -9,6 +9,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Cache Hardhat compilers
+      # Hardhat downloads solc into ~/.cache/hardhat-nodejs
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/hardhat-nodejs
+        key: hardhat-solc-${{ runner.os }}-${{ hashFiles('**/hardhat.config.*') }}
+
     - name: yarn-cache
       id: yarn-cache
       uses: ./.github/actions/yarn-cache
@@ -29,4 +37,6 @@ runs:
 
     - name: Build
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: yarn build

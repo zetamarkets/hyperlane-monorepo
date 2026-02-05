@@ -149,7 +149,9 @@ export const TOKEN_STANDARD_TO_PROVIDER_TYPE: Record<
     return ProviderType.CosmJs;
   }
 
-  return PROTOCOL_TO_DEFAULT_PROVIDER_TYPE[v];
+  const providerType = PROTOCOL_TO_DEFAULT_PROVIDER_TYPE[v];
+  assert(providerType, `No default provider type for protocol ${v}`);
+  return providerType;
 });
 
 export const TOKEN_NFT_STANDARDS = [
@@ -386,20 +388,20 @@ export const RADIX_TOKEN_TYPE_TO_STANDARD: Record<
   [TokenType.synthetic]: TokenStandard.RadixHypSynthetic,
 };
 
-export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> =
-  {
-    [ProtocolType.Ethereum]: TokenStandard.EvmNative,
-    [ProtocolType.Cosmos]: TokenStandard.CosmosNative,
-    [ProtocolType.CosmosNative]: TokenStandard.CosmosNative,
-    [ProtocolType.Sealevel]: TokenStandard.SealevelNative,
-    [ProtocolType.Starknet]: TokenStandard.StarknetNative,
-    [ProtocolType.Radix]: TokenStandard.RadixNative,
-    [ProtocolType.Sovereign]: TokenStandard.SovBankNative,
-  };
+export const PROTOCOL_TO_NATIVE_STANDARD: Partial<
+  Record<ProtocolType, TokenStandard>
+> = {
+  [ProtocolType.Ethereum]: TokenStandard.EvmNative,
+  [ProtocolType.Cosmos]: TokenStandard.CosmosNative,
+  [ProtocolType.CosmosNative]: TokenStandard.CosmosNative,
+  [ProtocolType.Sealevel]: TokenStandard.SealevelNative,
+  [ProtocolType.Starknet]: TokenStandard.StarknetNative,
+  [ProtocolType.Radix]: TokenStandard.RadixNative,
+  [ProtocolType.Sovereign]: TokenStandard.SovBankNative,
+};
 
-export const PROTOCOL_TO_HYP_NATIVE_STANDARD: Record<
-  ProtocolType,
-  TokenStandard
+export const PROTOCOL_TO_HYP_NATIVE_STANDARD: Partial<
+  Record<ProtocolType, TokenStandard>
 > = {
   [ProtocolType.Ethereum]: TokenStandard.EvmHypNative,
   [ProtocolType.Cosmos]: TokenStandard.CwHypNative,

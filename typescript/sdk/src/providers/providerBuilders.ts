@@ -194,6 +194,13 @@ export function defaultSovereignProviderBuilder(
   };
 }
 
+function unsupportedProtocolProviderBuilder(
+  _rpcUrls: RpcUrl[],
+  _network: number | string,
+): TypedProvider {
+  throw new Error('Unsupported protocol');
+}
+
 export type ProviderBuilderMap = Record<
   ProviderType,
   ProviderBuilderFn<TypedProvider>
@@ -223,4 +230,5 @@ export const protocolToDefaultProviderBuilder: Record<
   [ProtocolType.Starknet]: defaultStarknetJsProviderBuilder,
   [ProtocolType.Radix]: defaultRadixProviderBuilder,
   [ProtocolType.Sovereign]: defaultSovereignProviderBuilder,
+  [ProtocolType.Aleo]: unsupportedProtocolProviderBuilder,
 };

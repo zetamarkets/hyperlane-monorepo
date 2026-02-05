@@ -96,10 +96,10 @@ export class SovereignCoreAdapter
   }
 
   waitForMessageProcessed(
-    messageId: HexString,
-    destination: ChainName,
-    delayMs?: number,
-    maxAttempts?: number,
+    _messageId: HexString,
+    _destination: ChainName,
+    _delayMs?: number,
+    _maxAttempts?: number,
   ): Promise<boolean> {
     throw new Error('Not implemented');
   }

@@ -72,6 +72,35 @@ const logger = widgetLogger.child({
   module: 'walletIntegrations/multiProtocol',
 });
 
+const ALEO_ACCOUNT_INFO: AccountInfo = {
+  protocol: ProtocolType.Aleo,
+  addresses: [],
+  isReady: false,
+};
+
+const ALEO_WALLET_DETAILS: WalletDetails = {};
+
+const ALEO_ACTIVE_CHAIN: ActiveChainInfo = {};
+
+const ALEO_CONNECT_FN = () => {
+  logger.warn('Aleo wallet not supported');
+};
+
+const ALEO_DISCONNECT_FN = async () => {};
+
+const ALEO_TX_FNS: ChainTransactionFns = {
+  sendTransaction: async () => {
+    throw new Error('Aleo transactions not supported');
+  },
+  sendMultiTransaction: async () => {
+    throw new Error('Aleo transactions not supported');
+  },
+};
+
+const ALEO_WATCH_ASSET_FNS: WatchAssetFns = {
+  addAsset: async () => false,
+};
+
 export function useAccounts(
   multiProvider: MultiProtocolProvider,
   blacklistedAddresses: Address[] = [],
@@ -123,6 +152,7 @@ export function useAccounts(
         [ProtocolType.Starknet]: starknetAccountInfo,
         [ProtocolType.Radix]: radixAccountInfo,
         [ProtocolType.Sovereign]: sovereignAccountInfo,
+        [ProtocolType.Aleo]: ALEO_ACCOUNT_INFO,
       },
       readyAccounts,
     }),
@@ -238,6 +268,7 @@ export function useWalletDetails(): Record<ProtocolType, WalletDetails> {
       [ProtocolType.Starknet]: starknetWallet,
       [ProtocolType.Radix]: radixWallet,
       [ProtocolType.Sovereign]: sovereignWallet,
+      [ProtocolType.Aleo]: ALEO_WALLET_DETAILS,
     }),
     [evmWallet, solWallet, cosmosWallet, starknetWallet, radixWallet, sovereignWallet],
   );
@@ -260,6 +291,7 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
       [ProtocolType.Starknet]: onConnectStarknet,
       [ProtocolType.Radix]: onConnectRadix,
       [ProtocolType.Sovereign]: onConnectSovereign,
+      [ProtocolType.Aleo]: ALEO_CONNECT_FN,
     }),
     [
       onConnectEthereum,
@@ -321,6 +353,7 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
         ProtocolType.Sovereign,
         disconnectSovereign,
        ),
+      [ProtocolType.Aleo]: onClickDisconnect(ProtocolType.Aleo, ALEO_DISCONNECT_FN),
     }),
     [
       disconnectEvm,
@@ -362,6 +395,7 @@ export function useActiveChains(multiProvider: MultiProtocolProvider): {
         [ProtocolType.Starknet]: starknetChain,
         [ProtocolType.Radix]: radixChain,
         [ProtocolType.Sovereign]: sovereignChain,
+        [ProtocolType.Aleo]: ALEO_ACTIVE_CHAIN,
       },
       readyChains,
     }),
@@ -440,6 +474,7 @@ export function useTransactionFns(
         sendMultiTransaction: onSendMultiSovereignTx,
         switchNetwork: onSwitchSovereignNetwork,
       },
+      [ProtocolType.Aleo]: ALEO_TX_FNS,
     }),
     [
       onSendEvmTx,
@@ -491,6 +526,7 @@ export function useWatchAsset(
       [ProtocolType.Sovereign]: {
         addAsset: sovereignAddAsset,
       },
+      [ProtocolType.Aleo]: ALEO_WATCH_ASSET_FNS,
     }),
     [
       evmAddAsset,

@@ -211,7 +211,7 @@ export const ChainMetadataSchemaObject = z.object({
     .describe('Whether to bypass batch simulation for this chain.'),
 
   chainId: z
-    .union([ZNzUint, z.string()])
+    .union([ZUint, z.string()])
     .describe(`The chainId of the chain. Uses EIP-155 for EVM chains`),
 
   customGrpcUrls: z
@@ -347,7 +347,7 @@ export const ChainMetadataSchema = ChainMetadataSchemaExtensible.refine(
       [ProtocolType.Ethereum, ProtocolType.Sealevel].includes(
         metadata.protocol,
       ) &&
-      typeof metadata.chainId !== 'number'
+      (typeof metadata.chainId !== 'number' || metadata.chainId <= 0)
     )
       return false;
     else if (

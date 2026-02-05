@@ -8,7 +8,15 @@ IFS=$'\n\t'
 readonly REPO="hyperlane-xyz/hyperlane-starknet"
 readonly GITHUB_RELEASES_API="https://api.github.com/repos/${REPO}/releases"
 readonly TARGET_DIR="./release"
-readonly VERSION="v0.3.2"
+readonly VERSION="v0.3.10"
+readonly GITHUB_ACCEPT_HEADER="Accept: application/vnd.github+json"
+readonly GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_API_TOKEN:-}}}"
+
+# Optional auth header for GitHub API calls (helps avoid rate limiting in CI)
+declare -a GITHUB_AUTH_HEADER=()
+if [[ -n "${GITHUB_TOKEN}" ]]; then
+    GITHUB_AUTH_HEADER=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+fi
 
 # Color definitions
 declare -r COLOR_GREEN='\033[0;32m'
@@ -44,19 +52,45 @@ check_if_contracts_exist() {
 
 verify_version_exists() {
     local version=$1
-    if ! curl --output /dev/null --silent --head --fail "${GITHUB_RELEASES_API}/tags/${version}"; then
-        log_error "Version ${version} does not exist"
-        exit 1
+    if curl --output /dev/null --silent --head --fail \
+        -H "${GITHUB_ACCEPT_HEADER}" \
+        "${GITHUB_AUTH_HEADER[@]}" \
+        "${GITHUB_RELEASES_API}/tags/${version}"; then
+        return 0
     fi
+
+    # If auth was provided but fails (e.g., token can't access the repo), retry unauthenticated
+    if [[ ${#GITHUB_AUTH_HEADER[@]} -gt 0 ]]; then
+        if curl --output /dev/null --silent --head --fail \
+            -H "${GITHUB_ACCEPT_HEADER}" \
+            "${GITHUB_RELEASES_API}/tags/${version}"; then
+            return 0
+        fi
+    fi
+
+    log_error "Version ${version} does not exist"
+    exit 1
 }
 
 get_release_info() {
     local version=$1
     local release_info
 
-    release_info=$(curl -sf "${GITHUB_RELEASES_API}/tags/${version}") || {
-        log_error "Failed to fetch release information for version ${version}"
-        exit 1
+    release_info=$(curl -sf \
+        -H "${GITHUB_ACCEPT_HEADER}" \
+        "${GITHUB_AUTH_HEADER[@]}" \
+        "${GITHUB_RELEASES_API}/tags/${version}") || {
+        if [[ ${#GITHUB_AUTH_HEADER[@]} -gt 0 ]]; then
+            release_info=$(curl -sf \
+                -H "${GITHUB_ACCEPT_HEADER}" \
+                "${GITHUB_RELEASES_API}/tags/${version}") || {
+                log_error "Failed to fetch release information for version ${version}"
+                exit 1
+            }
+        else
+            log_error "Failed to fetch release information for version ${version}"
+            exit 1
+        fi
     }
     echo "$release_info"
 }

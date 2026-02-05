@@ -60,9 +60,8 @@ export enum ProviderType {
   Sovereign = 'sovereign-sdk-web3',
 }
 
-export const PROTOCOL_TO_DEFAULT_PROVIDER_TYPE: Record<
-  ProtocolType,
-  ProviderType
+export const PROTOCOL_TO_DEFAULT_PROVIDER_TYPE: Partial<
+  Record<ProtocolType, ProviderType>
 > = {
   [ProtocolType.Ethereum]: ProviderType.EthersV5,
   [ProtocolType.Sealevel]: ProviderType.SolanaWeb3,
@@ -74,6 +73,13 @@ export const PROTOCOL_TO_DEFAULT_PROVIDER_TYPE: Record<
 };
 
 export type ProviderMap<Value> = Partial<Record<ProviderType, Value>>;
+
+// Placeholder types for protocols that exist in metadata but aren't supported by this SDK package yet.
+// Using `never` makes the unsupported nature explicit while still satisfying generic indexing (e.g.
+// `ProtocolTypedTransaction<T>['transaction']`) across all ProtocolType values.
+type UnsupportedTypedProvider = { type: never; provider: never };
+type UnsupportedTypedTransaction = { type: never; transaction: never };
+type UnsupportedTypedReceipt = { type: never; receipt: never };
 
 type ProtocolTypesMapping = {
   [ProtocolType.Ethereum]: {
@@ -117,6 +123,12 @@ type ProtocolTypesMapping = {
     provider: SovereignProvider;
     contract: null;
     receipt: SovereignTransactionReceipt;
+  };
+  [ProtocolType.Aleo]: {
+    transaction: UnsupportedTypedTransaction;
+    provider: UnsupportedTypedProvider;
+    contract: null;
+    receipt: UnsupportedTypedReceipt;
   };
 };
 
