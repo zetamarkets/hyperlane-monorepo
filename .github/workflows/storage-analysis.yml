@@ -11,7 +11,7 @@ on:
       base:
         description: 'Branch to compare against'
         required: true
-        default: 'main'
+        default: 'master'
 
 jobs:
   diff-check:

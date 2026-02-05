@@ -3,7 +3,7 @@ name: Rust Agent Release
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'rust/main/**'
       - 'rust/scripts/ci/**'
@@ -188,7 +188,7 @@ jobs:
 
           BRANCH_NAME="release-agents-v${NEW_VERSION}"
 
-          # Create branch from current HEAD (which is main)
+          # Create branch from current HEAD (which is master)
           git checkout -B "$BRANCH_NAME"
 
           # Stage changes (Cargo files and all workspace CHANGELOG.md files)
@@ -216,7 +216,7 @@ jobs:
 
           ---
 
-          Once this PR is merged, the [\`rust-release.yml\`](https://github.com/${{ github.repository }}/blob/main/.github/workflows/rust-release.yml) workflow will automatically:
+          Once this PR is merged, the [\`rust-release.yml\`](https://github.com/${{ github.repository }}/blob/master/.github/workflows/rust-release.yml) workflow will automatically:
           - Create a GitHub release with tag \`agents-v${NEW_VERSION}\`
           - Trigger the build of release binaries
 
@@ -236,7 +236,7 @@ jobs:
             gh pr create \
               --title "chore: release agents v${NEW_VERSION}" \
               --body "$PR_BODY" \
-              --base main \
+              --base master \
               --head "$BRANCH_NAME" \
               --label "release" \
               --draft
@@ -262,7 +262,7 @@ jobs:
     needs: check-release-status
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.ref == 'refs/heads/main' &&
+      (github.ref == 'refs/heads/master' &&
         github.event_name == 'push' &&
         needs.check-release-status.outputs.should_release == 'true')
     steps:
@@ -279,9 +279,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Force prerelease mode if not on main branch
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "Not on main branch - forcing prerelease mode"
+          # Force prerelease mode if not on master branch
+          if [ "${{ github.ref }}" != "refs/heads/master" ]; then
+            echo "Not on master branch - forcing prerelease mode"
             IS_PRERELEASE="true"
           fi
 
@@ -333,7 +333,7 @@ jobs:
           # Generate workspace-grouped changelog
           PREV_TAG=$(git describe --tags --abbrev=0 --match "agents-v*" 2>/dev/null || echo "")
 
-          # For stable releases (push to main), use HEAD~1 to exclude the version bump commit
+          # For stable releases (push to master), use HEAD~1 to exclude the version bump commit
           # For prereleases (workflow_dispatch), use HEAD since there's no version bump commit
           if [ "$IS_PRERELEASE" = "true" ]; then
             COMMIT_RANGE_END="HEAD"

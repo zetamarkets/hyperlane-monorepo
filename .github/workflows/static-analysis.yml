@@ -2,8 +2,8 @@ name: static-analysis
 
 on:
   push:
-    # Triggers the workflow on push to main
-    branches: [main]
+    # Triggers the workflow on push to master
+    branches: [master]
     paths:
       - 'solidity/**'
       - '.github/workflows/static-analysis.yml'

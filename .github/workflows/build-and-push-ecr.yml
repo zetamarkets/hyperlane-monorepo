@@ -1,8 +1,6 @@
 name: Build and Push Agent to ECR
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
     inputs:
       ref:
@@ -17,12 +15,6 @@ permissions:
 concurrency:
   group: build-push-ecr-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  AWS_REGION: ap-northeast-1
-  ECR_REGISTRY: 840153641671.dkr.ecr.ap-northeast-1.amazonaws.com
-  ECR_REPOSITORY: hyperlane
-  AWS_ECR_ROLE_ARN: arn:aws:iam::840153641671:role/hyperlane-gha
 
 jobs:
   meta:
@@ -49,37 +41,13 @@ jobs:
   build_push:
     name: Build and Push Image
     needs: meta
-    runs-on:
-      - nscloud-ubuntu-22.04-arm64-16x32-with-cache
-      - nscloud-cache-tag-hyperlane-build
-      - nscloud-cache-size-100gb
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.ref || github.sha }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.AWS_ECR_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./rust/Dockerfile
-          push: true
-          platforms: linux/arm64
-          tags: |
-            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ needs.meta.outputs.image_tag }}
-            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ needs.meta.outputs.latest_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    uses: ./.github/workflows/_build_and_push.yml
+    with:
+      ref: ${{ github.event.inputs.ref || github.sha }}
+      image_tag: ${{ needs.meta.outputs.image_tag }}
+      latest_tag: ${{ needs.meta.outputs.latest_tag }}
+      aws_region: ap-northeast-1
+      ecr_registry: 840153641671.dkr.ecr.ap-northeast-1.amazonaws.com
+      ecr_repository: hyperlane
+      aws_ecr_role_arn: arn:aws:iam::840153641671:role/hyperlane-gha
+    secrets: inherit

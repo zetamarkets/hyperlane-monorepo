@@ -1,9 +1,9 @@
 name: test
 
 on:
-  # Triggers the workflow on pushes to main branch
+  # Triggers the workflow on pushes to master branch
   push:
-    branches: [main, 'audit-*']
+    branches: [master, 'audit-*']
   # Triggers on pull requests
   pull_request:
     branches:
@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: e2e-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref_name != 'main' }}
+  cancel-in-progress: ${{ github.ref_name != 'master' }}
 
 env:
   LOG_LEVEL: DEBUG
@@ -138,13 +138,13 @@ jobs:
           path_pattern: 'rust/'
           path_pattern_only: 'true'
 
-      # If the push event is to main, fallback to rust_only as false.
-      - name: Override for push to main
+      # If the push event is to master, fallback to rust_only as false.
+      - name: Override for push to master
         id: override-main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           echo "only_rust=false" >> $GITHUB_OUTPUT
-          echo "Push event to main detected. Setting only_rust to false."
+          echo "Push event to master detected. Setting only_rust to false."
 
   yarn-test-run:
     runs-on: ubuntu-latest
@@ -533,7 +533,7 @@ jobs:
           node-version-file: .nvmrc
 
       # Set rust_changes to true if:
-      # - on the main branch
+      # - on the master branch
       # - PR with changes to ./rust
       # - PR with changes to this workflow
       - name: Check for Rust file changes
@@ -541,14 +541,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # For main branch, check changes in the current commit
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            # For master branch, check changes in the current commit
             PARENT_SHA=$(git rev-parse HEAD^)
             CHANGES=$(git diff --name-only $PARENT_SHA HEAD -- ./rust ./.github/workflows/test.yml)
 
             if [[ -n "$CHANGES" ]]; then
               echo "rust_changes=true" >> $GITHUB_OUTPUT
-              echo "Changes detected in Rust files or workflow on main branch:"
+              echo "Changes detected in Rust files or workflow on master branch:"
               echo "$CHANGES"
             else
               echo "rust_changes=false" >> $GITHUB_OUTPUT
