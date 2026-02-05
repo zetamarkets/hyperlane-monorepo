@@ -1,3 +1,4 @@
+use hyperlane_core::NativeToken;
 use hyperlane_sovereign::{ConnectionConf, Signer, SovereignClient};
 
 use super::node::SovereignParameters;
@@ -29,10 +30,19 @@ pub struct ChainConfig {
     pub protocol: String,
     pub rpc_urls: Vec<AgentUrl>,
     pub signer: AgentConfigSigner,
+    pub native_token: NativeToken,
 }
 
 const SOVEREIGN_PROTOCOL: &str = "sovereign";
 const NULL_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000";
+const DEFAULT_SOVEREIGN_TOKEN_DENOM: &str = "sov";
+
+fn default_native_token() -> NativeToken {
+    NativeToken {
+        decimals: 18,
+        denom: DEFAULT_SOVEREIGN_TOKEN_DENOM.to_string(),
+    }
+}
 
 impl ChainConfig {
     pub fn new(key: &str, params: &SovereignParameters) -> Self {
@@ -52,6 +62,7 @@ impl ChainConfig {
                 key: key.to_owned(),
                 account_type: "ethereum".to_string(),
             },
+            native_token: default_native_token(),
         }
     }
 }
@@ -93,6 +104,7 @@ pub async fn get_or_create_client(conf: &ChainConfig) -> SovereignClient {
     let connection_conf = ConnectionConf {
         url: conf.rpc_urls[0].http.parse().unwrap(),
         op_submission_config: Default::default(),
+        native_token: default_native_token(),
     };
     let client = SovereignClient::new(&connection_conf, signer)
         .await

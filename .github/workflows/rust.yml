@@ -27,6 +27,8 @@ jobs:
       - nscloud-ubuntu-22.04-arm64-16x32-with-cache
       - nscloud-cache-tag-bullet-build
       - nscloud-cache-size-100gb
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -61,12 +63,17 @@ jobs:
         working-directory: ./rust/main
 
       - name: Upload coverage to Codecov
+        if: env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
         with:
           files: coverage.json
           flags: ./rust/main/lander
           fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
+
+      - name: Skip Codecov upload (no CODECOV_TOKEN)
+        if: env.CODECOV_TOKEN == ''
+        run: echo "CODECOV_TOKEN not set; skipping Codecov upload"
 
   test-rs:
     runs-on:

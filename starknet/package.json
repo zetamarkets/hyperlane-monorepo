@@ -9,7 +9,7 @@
   "scripts": {
     "fetch-contracts": "./scripts/fetch-contracts-release.sh",
     "generate-artifacts": "tsx ./scripts/generate-artifacts.ts",
-    "build": "tsc && yarn fetch-contracts && yarn generate-artifacts",
+    "build": "tsc && bash -c 'if [ \"${SKIP_STARKNET_ARTIFACTS:-}\" = \"true\" ]; then echo \"SKIP_STARKNET_ARTIFACTS=true; skipping fetch-contracts and generate-artifacts\"; else yarn fetch-contracts && yarn generate-artifacts; fi'",
     "clean": "rm -rf ./dist ./release",
     "lint": "eslint -c ./eslint.config.mjs .",
     "prettier": "prettier --write ./src ./package.json"

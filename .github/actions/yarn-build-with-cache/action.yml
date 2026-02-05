@@ -9,6 +9,23 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Cache Hardhat compilers
+      # Hardhat downloads solc into ~/.cache/hardhat-nodejs
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/hardhat-nodejs
+        key: hardhat-solc-${{ runner.os }}-${{ hashFiles('**/hardhat.config.*') }}
+
+    - name: Cache Starknet contract release artifacts
+      # @hyperlane-xyz/starknet-core downloads precompiled contracts during build.
+      # Cache them to reduce network flakiness and speed up repeated builds.
+      uses: actions/cache@v4
+      with:
+        path: |
+          starknet/release
+        key: starknet-release-${{ runner.os }}-${{ hashFiles('starknet/scripts/fetch-contracts-release.sh') }}
+
     - name: yarn-cache
       id: yarn-cache
       uses: ./.github/actions/yarn-cache
@@ -20,7 +37,7 @@ runs:
       shell: bash
       run: |
         yarn install
-        CHANGES=$(git status -s --ignore-submodules | grep -v "results.sarif")
+        CHANGES=$(git status -s --ignore-submodules | grep -v "results.sarif" || true)
         if [[ ! -z $CHANGES ]]; then
           echo "Changes found: $CHANGES"
           git diff
@@ -29,4 +46,6 @@ runs:
 
     - name: Build
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: yarn build

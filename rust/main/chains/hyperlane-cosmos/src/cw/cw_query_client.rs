@@ -238,7 +238,6 @@ impl CwQueryClient {
 }
 
 #[cfg(test)]
-
 mod test {
     use std::str::FromStr;
 

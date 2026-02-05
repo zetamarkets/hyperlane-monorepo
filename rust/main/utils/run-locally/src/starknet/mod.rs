@@ -152,7 +152,7 @@ fn launch_starknet_validator(
     debug: bool,
 ) -> AgentHandles {
     let validator_bin = concat_path(format!("../../{AGENT_BIN_PATH}"), "validator");
-    let validator_base = tempdir().expect("Failed to create a temp dir").into_path();
+    let validator_base = tempdir().expect("Failed to create a temp dir").keep();
     let validator_base_db = concat_path(&validator_base, "db");
 
     fs::create_dir_all(&validator_base_db).unwrap();
@@ -612,12 +612,11 @@ fn termination_invariants_met(
     Ok(true)
 }
 
-#[cfg(feature = "starknet")]
+#[cfg(all(test, feature = "starknet"))]
 mod test {
-    use super::*;
 
     #[test]
     fn test_run() {
-        run_locally()
+        super::run_locally()
     }
 }

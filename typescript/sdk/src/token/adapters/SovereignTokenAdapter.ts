@@ -188,7 +188,7 @@ export class SovereignTokenAdapter
     return bank.totalSupply(this.tokenId);
   }
 
-  async getMetadata(isNft?: boolean): Promise<TokenMetadata> {
+  async getMetadata(_isNft?: boolean): Promise<TokenMetadata> {
     // TODO: Return actual metadata
     return { decimals: 9, symbol: 'SPL', name: 'SPL Token' };
   }
@@ -262,13 +262,13 @@ export class SovereignHypTokenAdapter
   }
 
   async getDomains(): Promise<Domain[]> {
-    let routers = await this.getAllRouters();
+    const routers = await this.getAllRouters();
     return routers.map((r) => r.domain);
   }
 
   async getRouterAddress(domain: Domain): Promise<Buffer> {
-    let routers = await this.getAllRouters();
-    let router = routers.find((r) => r.domain === domain);
+    const routers = await this.getAllRouters();
+    const router = routers.find((r) => r.domain === domain);
     if (!router) {
       throw new Error(`No router found for domain ${domain}`);
     }
@@ -276,10 +276,10 @@ export class SovereignHypTokenAdapter
   }
 
   async getAllRouters(): Promise<Array<{ domain: Domain; address: Buffer }>> {
-    let response = await (
+    const response = await (
       await this.getProvider()
     ).http.get(`/modules/warp/route/${this.routeId}/routers`);
-    let routers = response as Record<string, unknown>['data'] as Array<{
+    const routers = response as Record<string, unknown>['data'] as Array<{
       domain: Domain;
       address: Buffer;
     }>;

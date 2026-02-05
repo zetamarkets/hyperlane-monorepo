@@ -46,4 +46,9 @@ export const PROTOCOL_TO_DEFAULT_NATIVE_TOKEN: Record<
     name: 'Sovereign',
     symbol: 'SOV',
   },
+  [ProtocolType.Aleo]: {
+    decimals: 6,
+    name: 'Aleo',
+    symbol: 'ALEO',
+  },
 };

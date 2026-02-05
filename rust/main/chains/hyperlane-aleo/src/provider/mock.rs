@@ -34,7 +34,7 @@ impl MockHttpClient {
     pub fn register_value(&self, endpoint: impl Into<String>, value: Value) {
         self.responses
             .write()
-            .unwrap()
+            .expect("mock responses lock poisoned")
             .insert(endpoint.into(), value);
     }
 
@@ -46,7 +46,7 @@ impl MockHttpClient {
     ) -> ChainResult<()> {
         let file = self.base_path.join(relative_file.into());
         let data = std::fs::read_to_string(&file).map_err(|e| {
-            HyperlaneAleoError::Other(format!("Failed reading mock file {:?}: {e}", file))
+            HyperlaneAleoError::Other(format!("Failed reading mock file {file:?}: {e}"))
         })?;
         let json: Value = if data.trim().is_empty() {
             Value::Null
@@ -58,18 +58,11 @@ impl MockHttpClient {
     }
 
     fn get(&self, path: &str) -> ChainResult<Value> {
-        self.responses
-            .read()
-            .unwrap()
-            .get(path)
-            .cloned()
-            .ok_or_else(|| {
-                HyperlaneAleoError::Other(format!(
-                    "No mock response registered for endpoint: {path}"
-                ))
-            })
-            .map(|v| Ok(v))
-            .unwrap()
+        let responses = self.responses.read().expect("mock responses lock poisoned");
+        let value = responses.get(path).cloned().ok_or_else(|| {
+            HyperlaneAleoError::Other(format!("No mock response registered for endpoint: {path}"))
+        })?;
+        Ok(value)
     }
 }
 

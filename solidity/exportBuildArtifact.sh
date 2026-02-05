@@ -13,14 +13,28 @@ outputFileTsd="./dist/buildArtifact.d.ts"
 # log that we're in the script
 echo 'Finding and processing hardhat build artifact...'
 
-# Find most recently modified JSON build artifact
-if [ "$(uname)" = "Darwin" ]; then
-    # for local flow
-    jsonFiles=$(find "$artifactsDir" -type f -name "*.json" -exec stat -f "%m %N" {} \; | sort -rn | head -n 1 | cut -d' ' -f2-)
-else
-    # for CI flow
-    jsonFiles=$(find "$artifactsDir" -type f -name "*.json" -exec stat -c "%Y %n" {} \; | sort -rn | head -n 1 | cut -d' ' -f2-)
-fi
+# Find most recently modified JSON build artifact.
+# Avoid platform-specific `stat` flags (BSD vs GNU) by using Node.
+jsonFiles=$(node --input-type=module -e '
+  import fs from "fs";
+  import path from "path";
+
+  function walk(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) files.push(...walk(p));
+      else if (entry.isFile() && p.endsWith(".json")) files.push(p);
+    }
+    return files;
+  }
+
+  const dir = process.argv[1];
+  const files = walk(dir);
+  files.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  if (files.length) process.stdout.write(files[0]);
+' "$artifactsDir")
 
 if [ ! -f "$jsonFiles" ]; then
   echo 'Failed to find build artifact'
@@ -51,14 +65,28 @@ if [ "$ZKSYNC" = "true" ]; then
   # log that we're in the script
   echo 'Finding and processing ZKSync hardhat build artifact...'
 
-  # Find most recently modified JSON build artifact
-  if [ "$(uname)" = "Darwin" ]; then
-    # for local flow
-    jsonFiles=$(find "$artifactsDir" -type f -name "*.json" -exec stat -f "%m %N" {} \; | sort -rn | head -n 1 | cut -d' ' -f2-)
-  else
-    # for CI flow
-    jsonFiles=$(find "$artifactsDir" -type f -name "*.json" -exec stat -c "%Y %n" {} \; | sort -rn | head -n 1 | cut -d' ' -f2-)
-  fi
+  # Find most recently modified JSON build artifact.
+  # Avoid platform-specific `stat` flags (BSD vs GNU) by using Node.
+  jsonFiles=$(node --input-type=module -e '
+    import fs from "fs";
+    import path from "path";
+
+    function walk(dir) {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      const files = [];
+      for (const entry of entries) {
+        const p = path.join(dir, entry.name);
+        if (entry.isDirectory()) files.push(...walk(p));
+        else if (entry.isFile() && p.endsWith(".json")) files.push(p);
+      }
+      return files;
+    }
+
+    const dir = process.argv[1];
+    const files = walk(dir);
+    files.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+    if (files.length) process.stdout.write(files[0]);
+  ' "$artifactsDir")
 
   if [ ! -f "$jsonFiles" ]; then
     echo 'Failed to find ZKSync build artifact'
