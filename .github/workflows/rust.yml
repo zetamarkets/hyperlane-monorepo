@@ -23,7 +23,10 @@ env:
 
 jobs:
   lander-coverage:
-    runs-on: depot-ubuntu-24.04-8
+    runs-on:
+      - nscloud-ubuntu-22.04-arm64-16x32-with-cache
+      - nscloud-cache-tag-bullet-build
+      - nscloud-cache-size-100gb
     steps:
       - uses: actions/checkout@v5
         with:
@@ -66,7 +69,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   test-rs:
-    runs-on: depot-ubuntu-24.04-8
+    runs-on:
+      - nscloud-ubuntu-22.04-arm64-16x32-with-cache
+      - nscloud-cache-tag-bullet-build
+      - nscloud-cache-size-100gb
     steps:
       - uses: actions/checkout@v5
         with:
@@ -93,7 +99,10 @@ jobs:
         working-directory: ./rust/sealevel
 
   lint-rs:
-    runs-on: depot-ubuntu-24.04-8
+    runs-on:
+      - nscloud-ubuntu-22.04-arm64-16x32-with-cache
+      - nscloud-cache-tag-bullet-build
+      - nscloud-cache-size-100gb
     steps:
       - uses: actions/checkout@v5
         with:
