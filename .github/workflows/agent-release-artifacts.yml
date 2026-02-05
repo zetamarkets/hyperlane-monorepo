@@ -22,17 +22,23 @@ jobs:
       matrix:
         include:
           - TARGET: x86_64-unknown-linux-gnu
-            OS: depot-ubuntu-24.04-8
+            OS: linux
+            RUNS_ON:
+              - nscloud-ubuntu-22.04-arm64-16x32-with-cache
+              - nscloud-cache-tag-bullet-build
+              - nscloud-cache-size-100gb
           - TARGET: x86_64-apple-darwin
-            OS: depot-macos-latest
+            OS: macos
+            RUNS_ON: macos-latest
           - TARGET: aarch64-apple-darwin
-            OS: depot-macos-latest
-    runs-on: ${{ matrix.OS }}
+            OS: macos
+            RUNS_ON: macos-latest
+    runs-on: ${{ matrix.RUNS_ON }}
     steps:
       - name: checkout
         uses: actions/checkout@v5
       - name: ubuntu setup
-        if: ${{ matrix.OS == 'depot-ubuntu-24.04-8' }}
+        if: ${{ matrix.OS == 'linux' }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -qq crossbuild-essential-arm64 crossbuild-essential-armhf
@@ -55,7 +61,6 @@ jobs:
         run: cargo build --release --target ${{ matrix.TARGET }} --bin relayer --bin scraper --bin validator
         working-directory: ./rust/main
       - name: make executable
-        if: ${{ matrix.OS == 'depot-ubuntu-24.04-8' || matrix.OS == 'depot-macos-latest' }}
         run: chmod ug+x,-w relayer scraper validator
         working-directory: rust/main/target/${{ matrix.TARGET }}/release
       - name: upload binaries
