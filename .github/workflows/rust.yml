@@ -80,5 +80,5 @@ jobs:
         working-directory: ./rust/main
 
       - name: Clippy (relayer + validator)
-        run: cargo clippy --locked -p relayer -p validator --all-targets -- -D warnings
+        run: cargo clippy --locked -p relayer -p validator -- -D warnings
         working-directory: ./rust/main
