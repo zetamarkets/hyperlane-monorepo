@@ -1,0 +1,79 @@
+name: Build and Push Hyperlane Image
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref to build'
+        required: true
+        type: string
+      image_tag:
+        description: 'Docker image tag'
+        required: true
+        type: string
+      latest_tag:
+        description: 'Latest tag alias'
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      ecr_registry:
+        required: true
+        type: string
+      ecr_repository:
+        required: true
+        type: string
+      aws_ecr_role_arn:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ${{ inputs.aws_region }}
+  ECR_REGISTRY: ${{ inputs.ecr_registry }}
+  ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+  AWS_ECR_ROLE_ARN: ${{ inputs.aws_ecr_role_arn }}
+  IMAGE_TAG: ${{ inputs.image_tag }}
+  LATEST_TAG: ${{ inputs.latest_tag }}
+
+jobs:
+  build_push:
+    name: Build and Push Image
+    runs-on:
+      - nscloud-ubuntu-22.04-arm64-16x32-with-cache
+      - nscloud-cache-tag-bullet-build
+      - nscloud-cache-size-100gb
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ECR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./rust/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.LATEST_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
