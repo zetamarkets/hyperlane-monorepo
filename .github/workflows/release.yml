@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - '.changeset/**'
       - '**/package.json'
@@ -38,7 +38,7 @@ jobs:
       id-token: write
       contents: write
       pull-requests: write
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v5
@@ -106,7 +106,7 @@ jobs:
     if: needs.check-latest-published.outputs.all_latest == 'false'
     strategy:
       matrix:
-        os: [depot-ubuntu-latest, depot-macos-latest, depot-windows-2022-8]
+        os: [ubuntu-latest, macos-latest, windows-2022]
         node-version: [18, 19, 20, 21, 22, 23]
     runs-on: ${{ matrix.os }}
     steps:

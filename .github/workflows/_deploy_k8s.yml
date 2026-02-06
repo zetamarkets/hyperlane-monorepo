@@ -1,0 +1,125 @@
+name: Deploy Kubernetes
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref to deploy'
+        required: true
+        type: string
+      deploy_env:
+        description: 'Deployment environment'
+        required: true
+        type: string
+      image_tag:
+        description: 'Docker image tag'
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      ecr_registry:
+        required: true
+        type: string
+      aws_ecr_role_arn:
+        required: true
+        type: string
+      aws_deploy_role_arn:
+        required: true
+        type: string
+      eks_cluster_name:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.deploy_env }}
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ inputs.aws_region }}
+      ECR_REGISTRY: ${{ inputs.ecr_registry }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      DEPLOY_ENV: ${{ inputs.deploy_env }}
+      EKS_CLUSTER_NAME: ${{ inputs.eks_cluster_name }}
+      AWS_ECR_ROLE_ARN: ${{ inputs.aws_ecr_role_arn }}
+      AWS_DEPLOY_ROLE_ARN: ${{ inputs.aws_deploy_role_arn }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Configure AWS credentials (management)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ECR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume deploy role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-chaining: true
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "${EKS_CLUSTER_NAME}" --region "${AWS_REGION}"
+
+      - name: Rollout
+        run: |
+          set -euo pipefail
+          if [[ "${IMAGE_TAG}" =~ ^latest($|-) ]]; then
+            echo "Refusing to deploy latest-tag alias: ${IMAGE_TAG}" >&2
+            exit 1
+          fi
+          overlay="kubernetes/${DEPLOY_ENV}"
+          if [ ! -d "$overlay" ]; then
+            echo "Missing overlay at ${overlay}" >&2
+            exit 1
+          fi
+
+          manifest="$(mktemp)"
+          kubectl kustomize "$overlay" > "$manifest"
+
+          image_repo="${ECR_REGISTRY}/hyperlane"
+          if ! grep -q "image: .*hyperlane" "$manifest"; then
+            echo "Missing hyperlane image reference in ${overlay}" >&2
+            exit 1
+          fi
+
+          sed -i -E "s|image: .*hyperlane(:[^[:space:]]*)?|image: ${image_repo}:${IMAGE_TAG}|" "$manifest"
+
+          kubectl apply -f "$manifest"
+          rm -f "$manifest"
+
+          origin_chain=""
+          target_chain=""
+          case "${DEPLOY_ENV}" in
+            staging)
+              origin_chain="solanatestnet"
+              target_chain="bullettestnet"
+              ;;
+            testnet)
+              origin_chain="solanatestnet"
+              target_chain="bullettestnet"
+              ;;
+            mainnet)
+              origin_chain="solanamainnet"
+              target_chain="bulletmainnet"
+              ;;
+            *)
+              echo "Unknown deploy environment: ${DEPLOY_ENV}" >&2
+              exit 1
+              ;;
+          esac
+
+          kubectl rollout status "statefulset/hyperlane-validator-${origin_chain}" -n hyperlane
+          kubectl rollout status "statefulset/hyperlane-validator-${target_chain}" -n hyperlane
+          kubectl rollout status "statefulset/hyperlane-relayer" -n hyperlane
