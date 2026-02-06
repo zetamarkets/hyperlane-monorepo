@@ -4,22 +4,22 @@ on:
   workflow_call:
     outputs:
       release_branch:
-        description: "Release branch"
+        description: 'Release branch'
         value: ${{ jobs.compute.outputs.release_branch }}
       release_num:
-        description: "Release number"
+        description: 'Release number'
         value: ${{ jobs.compute.outputs.release_num }}
       tag_name:
-        description: "Release tag"
+        description: 'Release tag'
         value: ${{ jobs.compute.outputs.tag_name }}
       previous_tag:
-        description: "Previous tag"
+        description: 'Previous tag'
         value: ${{ jobs.compute.outputs.previous_tag }}
       target_sha:
-        description: "Target SHA"
+        description: 'Target SHA'
         value: ${{ jobs.compute.outputs.target_sha }}
       image_tag:
-        description: "Image tag"
+        description: 'Image tag'
         value: ${{ jobs.compute.outputs.image_tag }}
 
 permissions:

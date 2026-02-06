@@ -14,9 +14,9 @@ spec:
       labels:
         app: hyperlane-relayer
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9091"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9091'
+        prometheus.io/path: '/metrics'
     spec:
       securityContext:
         fsGroup: 1000
@@ -24,18 +24,18 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - arm64
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - arm64
       serviceAccountName: default
       containers:
         - name: hyperlane-relayer
           image: 840153641671.dkr.ecr.ap-northeast-1.amazonaws.com/hyperlane:latest
           env:
             - name: CONFIG_FILES
-              value: "/configs/agent-config.json"
+              value: '/configs/agent-config.json'
             - name: HYP_CHAINS_BULLETMAINNET_SIGNER_KEY
               valueFrom:
                 secretKeyRef:
@@ -61,33 +61,33 @@ spec:
               readOnly: true
             - name: hyperlane-db
               mountPath: /hyperlane_db
-          command: ["./relayer"]
+          command: ['./relayer']
           args:
-            - "--db"
-            - "/hyperlane_db"
-            - "--relayChains"
-            - "bulletmainnet,solanamainnet"
-            - "--metrics-port"
-            - "9091"
-            - "--gasPaymentEnforcement"
+            - '--db'
+            - '/hyperlane_db'
+            - '--relayChains'
+            - 'bulletmainnet,solanamainnet'
+            - '--metrics-port'
+            - '9091'
+            - '--gasPaymentEnforcement'
             - '[{"type":"none"}]'
-            - "--whitelist"
+            - '--whitelist'
             - '[{"destinationDomain":"5555"},{"destinationDomain":"1399811149"}]'
-            - "--chains.solanamainnet.customRpcUrls"
-            - "$(ORIGIN_CHAIN_RPC_URL_RELAYER)"
-            - "--chains.solanamainnet.index.from"
-            - "353202"
-            - "--log.format"
-            - "json"
-            - "--log.level"
-            - "debug"
+            - '--chains.solanamainnet.customRpcUrls'
+            - '$(ORIGIN_CHAIN_RPC_URL_RELAYER)'
+            - '--chains.solanamainnet.index.from'
+            - '353202'
+            - '--log.format'
+            - 'json'
+            - '--log.level'
+            - 'debug'
           resources:
             requests:
-              memory: "5Gi"
-              cpu: "500m"
+              memory: '5Gi'
+              cpu: '500m'
             limits:
-              memory: "12Gi"
-              cpu: "2000m"
+              memory: '12Gi'
+              cpu: '2000m'
       volumes:
         - name: agent-config
           configMap:
@@ -96,12 +96,12 @@ spec:
               - key: agent-config.json
                 path: agent-config.json
   volumeClaimTemplates:
-  - metadata:
-      name: hyperlane-db
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: gp3
+    - metadata:
+        name: hyperlane-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: gp3

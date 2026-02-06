@@ -14,9 +14,9 @@ spec:
       labels:
         app: hyperlane-validator-bullettestnet
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9090"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9090'
+        prometheus.io/path: '/metrics'
     spec:
       securityContext:
         fsGroup: 1000
@@ -24,18 +24,18 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - arm64
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - arm64
       serviceAccountName: validator-bullettestnet-testnet
       containers:
         - name: hyperlane-validator-bullettestnet
           image: 840153641671.dkr.ecr.ap-northeast-1.amazonaws.com/hyperlane:latest
           env:
             - name: CONFIG_FILES
-              value: "/configs/agent-config.json"
+              value: '/configs/agent-config.json'
             - name: HYP_VALIDATOR_KEY
               valueFrom:
                 secretKeyRef:
@@ -53,38 +53,38 @@ spec:
               readOnly: true
             - name: hyperlane-db
               mountPath: /hyperlane_db
-          command: ["./validator"]
+          command: ['./validator']
           args:
-            - "--db"
-            - "/hyperlane_db"
-            - "--originChainName"
-            - "bullettestnet"
-            - "--chains.bullettestnet.customRpcUrls"
-            - "http://rollup.applications"
-            - "--checkpointSyncer.type"
-            - "s3"
-            - "--checkpointSyncer.bucket"
-            - "hyperlane-validator-testnet-bucket"
-            - "--checkpointSyncer.region"
-            - "ap-northeast-1"
-            - "--checkpointSyncer.folder"
-            - "bullettestnet-signatures"
-            - "--log.format"
-            - "json"
-            - "--log.level"
-            - "debug"
-            - "--metrics-port"
-            - "9090"
+            - '--db'
+            - '/hyperlane_db'
+            - '--originChainName'
+            - 'bullettestnet'
+            - '--chains.bullettestnet.customRpcUrls'
+            - 'http://rollup.applications'
+            - '--checkpointSyncer.type'
+            - 's3'
+            - '--checkpointSyncer.bucket'
+            - 'hyperlane-validator-testnet-bucket'
+            - '--checkpointSyncer.region'
+            - 'ap-northeast-1'
+            - '--checkpointSyncer.folder'
+            - 'bullettestnet-signatures'
+            - '--log.format'
+            - 'json'
+            - '--log.level'
+            - 'debug'
+            - '--metrics-port'
+            - '9090'
           ports:
             - containerPort: 9090
               name: metrics
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: '1Gi'
+              cpu: '500m'
             limits:
-              memory: "8Gi"
-              cpu: "2000m"
+              memory: '8Gi'
+              cpu: '2000m'
       volumes:
         - name: agent-config
           configMap:
@@ -93,12 +93,12 @@ spec:
               - key: agent-config.json
                 path: agent-config.json
   volumeClaimTemplates:
-  - metadata:
-      name: hyperlane-db
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: gp3
+    - metadata:
+        name: hyperlane-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: gp3

@@ -4,15 +4,15 @@ on:
   workflow_call:
     inputs:
       ref:
-        description: "Git ref to deploy"
+        description: 'Git ref to deploy'
         required: true
         type: string
       deploy_env:
-        description: "Deployment environment"
+        description: 'Deployment environment'
         required: true
         type: string
       image_tag:
-        description: "Docker image tag"
+        description: 'Docker image tag'
         required: true
         type: string
       aws_region:

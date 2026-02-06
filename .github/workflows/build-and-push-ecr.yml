@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to build (branch, tag, or SHA)"
+        description: 'Git ref to build (branch, tag, or SHA)'
         required: false
-        default: "master"
+        default: 'master'
 
 permissions:
   contents: read

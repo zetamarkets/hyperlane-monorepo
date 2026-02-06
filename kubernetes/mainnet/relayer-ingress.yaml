@@ -6,21 +6,21 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 spec:
   rules:
-  - host: hyprelay.mainnet.bullet.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: hyperlane-relayer
-            port:
-              name: http
+    - host: hyprelay.mainnet.bullet.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hyperlane-relayer
+                port:
+                  name: http
   tls:
-  - hosts:
-    - hyprelay.mainnet.bullet.xyz
-    secretName: hyperlane-relayer-tls
+    - hosts:
+        - hyprelay.mainnet.bullet.xyz
+      secretName: hyperlane-relayer-tls

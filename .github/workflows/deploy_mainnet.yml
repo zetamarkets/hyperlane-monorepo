@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       comment:
-        description: "Deployment context or reason"
+        description: 'Deployment context or reason'
         required: true
-        default: ""
+        default: ''
         type: string
 
 permissions:
@@ -129,7 +129,7 @@ jobs:
         id: release_context
         uses: zetamarkets/release-actions/build-release-context@a6d5d3185fe2d19fa13047463722c245c7bce4ff
         with:
-          title: "Promote Release"
+          title: 'Promote Release'
           intro: ${{ steps.context_inputs.outputs.intro }}
           items_json: ${{ steps.context_inputs.outputs.items_json }}
           warning: ${{ steps.context_inputs.outputs.warning }}

@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deployment environment"
+        description: 'Deployment environment'
         type: choice
         options:
           - staging
           - testnet
         required: true
       ref:
-        description: "Optional ref override (if different from selected branch)"
+        description: 'Optional ref override (if different from selected branch)'
         type: string
         required: false
-        default: ""
+        default: ''
 
 permissions:
   contents: read

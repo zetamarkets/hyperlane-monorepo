@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       release_branch:
-        description: "Release branch to deploy (release-<num>)"
+        description: 'Release branch to deploy (release-<num>)'
         required: true
         type: string
 
