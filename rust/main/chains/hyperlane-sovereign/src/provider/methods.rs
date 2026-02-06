@@ -97,7 +97,11 @@ impl SovereignClient {
             Some(slot) => &format!("/modules/mailbox/state/deliveries-count?slot_number={slot}"),
         };
 
-        Ok(self.http_get::<Data>(query).await?.value.unwrap_or_default())
+        Ok(self
+            .http_get::<Data>(query)
+            .await?
+            .value
+            .unwrap_or_default())
     }
 
     /// Check if message with given id was delivered

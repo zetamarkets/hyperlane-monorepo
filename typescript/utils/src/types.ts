@@ -9,6 +9,7 @@ export enum ProtocolType {
   Starknet = 'starknet',
   Radix = 'radix',
   Sovereign = 'sovereign',
+  Aleo = 'aleo',
 }
 // A type that also allows for literal values of the enum
 export type ProtocolTypeValue = `${ProtocolType}`;
@@ -21,6 +22,8 @@ export const ProtocolSmallestUnit = {
   [ProtocolType.Starknet]: 'fri',
   [ProtocolType.Radix]: 'attos',
   [ProtocolType.Sovereign]: 'tokens',
+  // Best-effort label; Aleo uses "credits" as its native asset.
+  [ProtocolType.Aleo]: 'credits',
 };
 
 /********* BASIC TYPES *********/

@@ -649,7 +649,7 @@ pub fn build_sovereign_connection_conf(
     err: &mut ConfigParsingError,
     op_submission_config: OpSubmissionConfig,
 ) -> Option<ChainConnectionConf> {
-    let Some(url) = rpcs.first() else { return None };
+    let url = rpcs.first()?;
 
     let native_token = parse_sovereign_native_token(chain, err)?;
 

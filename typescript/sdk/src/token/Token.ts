@@ -108,10 +108,12 @@ export class Token implements IToken {
     const { protocol, name: chainName, logoURI } = chainMetadata;
     const nativeToken =
       chainMetadata.nativeToken || PROTOCOL_TO_DEFAULT_NATIVE_TOKEN[protocol];
+    const standard = PROTOCOL_TO_NATIVE_STANDARD[protocol];
+    assert(standard, `Unsupported protocol for native token: ${protocol}`);
 
     return new Token({
       chainName,
-      standard: PROTOCOL_TO_NATIVE_STANDARD[protocol],
+      standard,
       addressOrDenom: nativeToken.denom ?? '',
       decimals: nativeToken.decimals,
       symbol: nativeToken.symbol,
@@ -445,13 +447,15 @@ export class Token implements IToken {
   }
 
   isNative(): boolean {
-    return Object.values(PROTOCOL_TO_NATIVE_STANDARD).includes(this.standard);
+    return Object.values(PROTOCOL_TO_NATIVE_STANDARD)
+      .filter((s): s is TokenStandard => !!s)
+      .includes(this.standard);
   }
 
   isHypNative(): boolean {
-    return Object.values(PROTOCOL_TO_HYP_NATIVE_STANDARD).includes(
-      this.standard,
-    );
+    return Object.values(PROTOCOL_TO_HYP_NATIVE_STANDARD)
+      .filter((s): s is TokenStandard => !!s)
+      .includes(this.standard);
   }
 
   isCollateralized(): boolean {

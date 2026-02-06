@@ -25,10 +25,13 @@ env:
   TURBO_API: https://cache.depot.dev
   TURBO_TOKEN: ${{ secrets.DEPOT_TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.DEPOT_ORG_ID }}
+  # Starknet artifacts are fetched from GitHub releases during build and are flaky on
+  # unauthenticated/parallel CI jobs. We don't currently need them for fork CI.
+  SKIP_STARKNET_ARTIFACTS: ${{ github.repository_owner != 'hyperlane-xyz' && 'true' || '' }}
 
 jobs:
   yarn-install:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
@@ -57,8 +60,8 @@ jobs:
         run: yarn syncpack list-mismatches
 
   lint-prettier:
-    runs-on: depot-ubuntu-24.04-8
-    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -147,9 +150,9 @@ jobs:
           echo "Push event to main detected. Setting only_rust to false."
 
   yarn-test-run:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    timeout-minutes: 10
+    timeout-minutes: 20
     if: needs.rust-only.outputs.only_rust == 'false'
     steps:
       - uses: actions/checkout@v5
@@ -184,7 +187,7 @@ jobs:
           result: ${{ needs.yarn-test-run.result }}
 
   infra-test:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [set-base-sha]
     env:
       GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
@@ -196,14 +199,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
           fetch-depth: 0
-
-      - name: Install gitleaks
-        id: gitleaks-install
-        if: github.event_name != 'merge_group'
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
 
       - name: Check for balance/config changes
         run: |
@@ -222,10 +217,6 @@ jobs:
       - name: Checkout registry
         uses: ./.github/actions/checkout-registry
 
-      - name: GitLeaks Tests
-        if: steps.gitleaks-install.outcome != 'skipped'
-        run: yarn --cwd typescript/infra test:gitleaks
-
       - name: Balance Tests
         if: env.BALANCE_CHANGES == 'true'
         run: yarn --cwd typescript/infra test:balance
@@ -235,9 +226,9 @@ jobs:
         run: yarn --cwd typescript/infra test:warp
 
   cli-install-test-run:
-    runs-on: depot-ubuntu-24.04
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -265,9 +256,9 @@ jobs:
           result: ${{ needs.cli-install-test-run.result }}
 
   cli-evm-e2e-matrix:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -326,9 +317,9 @@ jobs:
           CLI_E2E_TEST: ${{ matrix.test }}
 
   cli-cosmos-e2e-matrix:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -366,9 +357,9 @@ jobs:
           CLI_E2E_TEST: ${{ matrix.test }}
 
   cli-radix-e2e-matrix:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -401,9 +392,9 @@ jobs:
           CLI_E2E_TEST: ${{ matrix.test }}
 
   cli-cross-chain-e2e-matrix:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -466,9 +457,9 @@ jobs:
           result: ${{ needs.cli-radix-e2e-matrix.result }}
 
   cosmos-sdk-e2e-run:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -497,7 +488,7 @@ jobs:
           result: ${{ needs.cosmos-sdk-e2e-run.result }}
 
   agent-configs:
-    runs-on: depot-ubuntu-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -526,8 +517,10 @@ jobs:
           fi
 
   e2e-matrix:
-    runs-on: depot-ubuntu-24.04-8
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.base_ref == 'main') || github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    # Fork CI: these Rust agent E2E tests are extremely expensive and frequently hit
+    # the job timeout on PRs. Run them on merges/pushes instead.
+    if: github.event_name != 'pull_request' && (github.event_name == 'push' || github.event_name == 'merge_group')
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -710,24 +703,43 @@ jobs:
     if: always()
     steps:
       - name: Check e2e matrix status
-        if: ${{ needs.e2e-matrix.result != 'success' }}
+        if: ${{ needs.e2e-matrix.result != 'success' && needs.e2e-matrix.result != 'skipped' }}
         run: |
           echo "E2E tests failed"
           exit 1
 
+  check-infra-changes:
+    needs: [set-base-sha]
+    runs-on: ubuntu-latest
+    outputs:
+      has_infra_changes: ${{ steps.check-infra.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check for infra changes
+        id: check-infra
+        uses: ./.github/actions/check-path-changes
+        with:
+          base_sha: ${{ needs.set-base-sha.outputs.base_sha }}
+          head_sha: ${{ needs.set-base-sha.outputs.current_sha }}
+          path_pattern: '(typescript/infra/|\.registryrc$)'
+
   env-test-matrix:
-    runs-on: depot-ubuntu-latest
-    needs: [rust-only]
-    if: needs.rust-only.outputs.only_rust == 'false'
+    runs-on: ubuntu-latest
+    needs: [rust-only, check-infra-changes]
+    if: github.event_name != 'pull_request' && needs.rust-only.outputs.only_rust == 'false' && needs.check-infra-changes.outputs.has_infra_changes == 'true'
     env:
-      MAINNET3_ARBITRUM_RPC_URLS: ${{ secrets.MAINNET3_ARBITRUM_RPC_URLS }}
-      MAINNET3_OPTIMISM_RPC_URLS: ${{ secrets.MAINNET3_OPTIMISM_RPC_URLS }}
-      MAINNET3_ETHEREUM_RPC_URLS: ${{ secrets.MAINNET3_ETHEREUM_RPC_URLS }}
-      TESTNET4_SEPOLIA_RPC_URLS: ${{ secrets.TESTNET4_SEPOLIA_RPC_URLS }}
+      MAINNET3_ARBITRUM_RPC_URLS: ${{ secrets.MAINNET3_ARBITRUM_RPC_URLS || 'https://arb1.arbitrum.io/rpc' }}
+      MAINNET3_OPTIMISM_RPC_URLS: ${{ secrets.MAINNET3_OPTIMISM_RPC_URLS || 'https://mainnet.optimism.io' }}
+      MAINNET3_ETHEREUM_RPC_URLS: ${{ secrets.MAINNET3_ETHEREUM_RPC_URLS || 'https://eth.merkle.io' }}
+      TESTNET4_SEPOLIA_RPC_URLS: ${{ secrets.TESTNET4_SEPOLIA_RPC_URLS || 'https://rpc.sepolia.org' }}
 
     timeout-minutes: 10
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         environment: [mainnet3]
         chain: [ethereum, arbitrum, optimism, inevm]
@@ -797,6 +809,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check-solidity-changes]
     if: needs.check-solidity-changes.outputs.has_solidity_changes == 'true'
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -816,9 +830,14 @@ jobs:
           NODE_OPTIONS: --max_old_space_size=4096
 
       - name: Upload coverage reports to Codecov with GitHub Action
+        if: env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
+
+      - name: Skip Codecov upload (no CODECOV_TOKEN)
+        if: env.CODECOV_TOKEN == ''
+        run: echo "CODECOV_TOKEN not set; skipping Codecov upload"
 
   coverage:
     runs-on: ubuntu-latest

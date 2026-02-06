@@ -71,7 +71,7 @@ async fn test_message_not_native_warp_route_recipient() {
     let app_context = Some("SOL/warp-route".to_string());
     let message = HyperlaneMessage {
         recipient: hex_or_base58_or_bech32_to_h256("5dDyfdy9fannAdHEkYghgQpiPZrQPHadxBLa1WsGHPFi")
-            .unwrap(),
+            .expect("valid recipient"),
         ..Default::default()
     };
     let check_account_does_not_exist_and_get_minimum = |_: H256| async move { None };
@@ -94,7 +94,7 @@ async fn test_message_is_not_token_message() {
     let app_context = Some("SOL/warp-route".to_string());
     let message = HyperlaneMessage {
         recipient: hex_or_base58_or_bech32_to_h256("8DtAGQpcMuD5sG3KdxDy49ydqXUggR1LQtebh2TECbAc")
-            .unwrap(),
+            .expect("valid recipient"),
         ..Default::default()
     };
     let check_account_does_not_exist_and_get_minimum = |_: H256| async move { None };
@@ -108,7 +108,10 @@ async fn test_message_is_not_token_message() {
     .await;
 
     // then
-    assert_eq!(report.unwrap(), MalformedMessage(message));
+    assert_eq!(
+        report.expect("expected malformed message report"),
+        MalformedMessage(message)
+    );
 }
 
 #[tokio::test]
@@ -118,7 +121,7 @@ async fn test_token_recipient_exists_or_communication_error() {
     let token_message = TokenMessage::new(H256::zero(), U256::one(), vec![]);
     let message = HyperlaneMessage {
         recipient: hex_or_base58_or_bech32_to_h256("8DtAGQpcMuD5sG3KdxDy49ydqXUggR1LQtebh2TECbAc")
-            .unwrap(),
+            .expect("valid recipient"),
         body: encode(token_message),
         ..Default::default()
     };
@@ -145,7 +148,7 @@ async fn test_below_minimum() {
     let token_message = TokenMessage::new(H256::zero(), amount, vec![]);
     let message = HyperlaneMessage {
         recipient: hex_or_base58_or_bech32_to_h256("8DtAGQpcMuD5sG3KdxDy49ydqXUggR1LQtebh2TECbAc")
-            .unwrap(),
+            .expect("valid recipient"),
         body: encode(token_message),
         ..Default::default()
     };
@@ -161,7 +164,7 @@ async fn test_below_minimum() {
 
     // then
     assert_eq!(
-        report.unwrap(),
+        report.expect("expected amount below minimum report"),
         AmountBelowMinimum {
             minimum,
             actual: amount,
@@ -178,7 +181,7 @@ async fn test_above_minimum() {
     let token_message = TokenMessage::new(H256::zero(), amount, vec![]);
     let message = HyperlaneMessage {
         recipient: hex_or_base58_or_bech32_to_h256("8DtAGQpcMuD5sG3KdxDy49ydqXUggR1LQtebh2TECbAc")
-            .unwrap(),
+            .expect("valid recipient"),
         body: encode(token_message),
         ..Default::default()
     };
@@ -198,6 +201,8 @@ async fn test_above_minimum() {
 
 fn encode(token_message: TokenMessage) -> Vec<u8> {
     let mut encoded = vec![];
-    token_message.write_to(&mut encoded).unwrap();
+    token_message
+        .write_to(&mut encoded)
+        .expect("token message encoding should succeed");
     encoded
 }
