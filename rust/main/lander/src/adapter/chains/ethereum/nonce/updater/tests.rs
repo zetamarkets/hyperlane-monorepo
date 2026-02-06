@@ -5,6 +5,7 @@ use ethers_core::types::Address;
 
 use hyperlane_core::{ChainCommunicationError, U256};
 use hyperlane_ethereum::EthereumReorgPeriod;
+use tokio::time::Instant;
 
 use crate::tests::test_utils::tmp_dbs;
 use crate::transaction::TransactionUuid;
@@ -35,7 +36,8 @@ fn make_updater(
 
     let provider = Arc::new(mock);
     let reorg_period = EthereumReorgPeriod::Blocks(1);
-    let block_time = Duration::from_millis(1);
+    // Use a reasonably large block time to avoid flaky timing assumptions in tests.
+    let block_time = Duration::from_secs(1);
     NonceUpdater::new(address, reorg_period, block_time, provider, state)
 }
 
@@ -104,13 +106,19 @@ async fn test_update_boundaries_waits_for_block_time() {
         .set_finalized_nonce_test(&U256::from(100))
         .await
         .unwrap();
+    // Ensure the updater thinks the last update happened "just now", regardless of
+    // CI scheduling jitter.
+    *updater.updated.lock().await = Instant::now();
     updater.update_boundaries().await.unwrap();
     // Should still be 100, not overwritten
     let finalized = state.get_finalized_nonce_test().await.unwrap();
     assert_eq!(finalized, Some(U256::from(100)));
 
-    // Wait for block_time and try again
-    tokio::time::sleep(Duration::from_millis(2)).await;
+    // Force the "last updated" instant far enough in the past so we trigger an update
+    // without having to sleep in real time.
+    *updater.updated.lock().await = Instant::now()
+        .checked_sub(updater.block_time + Duration::from_millis(1))
+        .expect("checked_sub should not underflow");
     updater.update_boundaries().await.unwrap();
     // Should now be updated to 2 again
     let finalized = state.get_finalized_nonce_test().await.unwrap();
