@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { existsSync } from 'fs';
 
-import { DEFAULT_REGISTRY_URI, getRegistry } from '../config/registry.js';
 import { WarpRouteIds } from '../config/environments/mainnet3/warp/warpIds.js';
+import { DEFAULT_REGISTRY_URI, getRegistry } from '../config/registry.js';
 
 describe('Warp IDs', () => {
   it('Has all warp IDs in the registry', async function () {
